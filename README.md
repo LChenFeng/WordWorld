@@ -57,20 +57,20 @@
     <th>输出</th>  
   </tr>
     <tr>
-      <td>板</td>  
+      <td>棍</td>  
       <td> </td> 
-      <td>板</td>
+      <td>棍</td>
       <td rowspan="3">梯x2</td>
     </tr>  
     <tr> 
-      <td>板</td>  
       <td>棍</td>  
-      <td>板</td>
+      <td>棍</td>  
+      <td>棍</td>
     </tr> 
     <tr> 
-      <td>板</td>  
+      <td>棍</td>  
       <td> </td>  
-      <td>板</td>
+      <td>棍</td>
     </tr> 
 </table> 
 
