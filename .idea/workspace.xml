@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="980ab885-a67c-4dcb-a8b9-26bc8f287da9" name="更改" comment="" />
+    <list default="true" id="980ab885-a67c-4dcb-a8b9-26bc8f287da9" name="更改" comment="try">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/UI.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data/UI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/json/blocks/chinese.json" beforeDir="false" afterPath="$PROJECT_DIR$/Data/json/blocks/chinese.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/object.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data/object.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/player.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data/player.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/world.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data/world.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/__main__.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -54,7 +64,9 @@
   &quot;associatedIndex&quot;: 8
 }</component>
   <component name="ProjectId" id="2jdbe8b5vKBHSIzUmsmR2EifYmt" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="autoscrollFromSource" value="true" />
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -154,6 +166,15 @@
       <option name="presentableId" value="Default" />
       <updated>1721719994423</updated>
     </task>
+    <task id="LOCAL-00001" summary="try">
+      <option name="closed" value="true" />
+      <created>1768659377248</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1768659377248</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -166,6 +187,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="try" />
+    <option name="LAST_COMMIT_MESSAGE" value="try" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

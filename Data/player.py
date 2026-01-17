@@ -3,8 +3,7 @@ from Data.object import Synthesizer
 
 
 class Player:
-    pos = ((WIDTH - size_p) / 2, (HEIGHT - size_p) / 2)  # 窗口坐标
-    start = pos[0] / size, pos[1] / size
+    pos = ((WIDTH - size) / 2, (HEIGHT - size) / 2)  # 窗口坐标
     color = (255, 255, 255)
     font_p = pg.font.Font(font_path, round(size_p))
     sw = 400 * scale
@@ -38,15 +37,17 @@ class Player:
         self.count = 0
         self.distance = 3 if self.mode == 0 else 5
         self.hp = Health(100) if self.mode == 0 else Health(0)
+        self.camera = Camera(self.x, self.y)
 
-    @staticmethod
     def __handle(arr):
-        return not (CHAR[arr[0]]['penetrable'] and CHAR[arr[0]]['penetrable'])
+        p1 = True if arr[0] == None else arr[0].penetrable
+        p2 = True if arr[1] == None else arr[1].penetrable
+        return not (p1 and p2)
 
     def collide(self, world, dx, dy):
         sx = self.x0 - self.x
         sy = self.y0 - self.y
-        coll = world.get_ids((self.x0 - 1, self.y0 - 1), (self.x0 + 2, self.y0 + 2))
+        coll = world.get_blocks((self.x - 1, self.y + 1), (self.x + 2, self.y - 2))
         self.land = Player.__handle(coll[1:3, -2]) if self.y == self.y0 else Player.__handle(coll[1:3, -1])
         if Player.__handle(coll[0, 1:3]) and self.v_x < 0 and dx < sx:
             self.v_x = 0
@@ -82,9 +83,6 @@ class Player:
     def get_pos(self):
         return self.x, self.y
 
-    def get_scrpoint(self):
-        return self.x - self.start[0], self.y - self.start[1]
-
     def update(self, world):
         self.v_x += self.a_x * dt
         if self.v_x >= self.max_speed:
@@ -118,22 +116,26 @@ class Player:
     def excavate(self, world, pos):
         x, y = self.camera.screen_to_world(pos)
         if -self.distance <= x - self.x0 <= self.distance + 2 and abs(y - self.y0) <= self.distance:
-            world.destroy((x, y))
+            item, locking, drop = world.destroy((x, y), not bool(self.mode))
+            self.knap.add(item)
+            for i in locking:
+                self.knap.add(i)
+            self.knap.add(drop)
 
     def interact(self, world, pos):
         x, y = self.camera.screen_to_world(pos)
         if -self.distance <= x - self.x0 <= self.distance + 2 and abs(y - self.y0) <= self.distance and (
                 not 0 <= x - self.x0 <= 2 or not -1 <= y - self.y0 <= 1):
             try:
-                # block = world.get_blocks((x, y), (x, y))[0, 0]
-                # block = block.use(self, world)
-                # self.opening.append(block) if block != None else None
-                # self.state = 0
-                # self.count = 0
-                raise AttributeError
+                block = world.get_blocks((x, y), (x, y))[0, 0]
+                block = block.use(self, world)
+                self.opening.append(block) if block != None else None
+                self.state = 0
+                self.count = 0
             except AttributeError:
                 if (hold := self.knap.get_hold()) != None:
-                    world.place((x, y), hold.id)
+                    word = world.create(hold, (x, y))
+                    self.knap.add(word)
 
     def move(self, dir):
         self.v_x = 0 if self.dir == -dir else self.v_x

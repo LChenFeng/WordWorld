@@ -1,13 +1,88 @@
 from Data.const import *
+import json
+import os
 
-class BlockEntity:
-    def __init__(self):
-        pass
+with open(block_path[0], 'r', encoding='utf-8') as file:
+    CHAR = json.load(file)
+with open(block_path[1], 'r', encoding='utf-8') as file:
+    SYMBOL = json.load(file)
+ID1 = [int(i) for i in CHAR.keys()]
+ID2 = [int(i) for i in SYMBOL.keys()]
+CHAR.update(SYMBOL)
 
-    def __del__(self):
-        pass
+real_rec = os.listdir(real_path)
+RECIPES = []
+for i in real_rec:
+    with open(os.path.join(real_path, i), 'r') as file:
+        RECIPES.append(json.load(file))
 
-class Table(BlockEntity):
+
+class Block:
+    SPEACIAL = {}
+    grid_size = 3
+    cell_size = size // grid_size
+
+    def __new__(cls, *args):
+        if len(args) != 0:
+            id = args[0]
+            if id in Block.SPEACIAL:
+                return super().__new__(Block.SPEACIAL[id])
+        return super().__new__(cls)
+
+    def __init__(self, id, n, i, j):
+        self.pos = (n * chunk_size[0] + i, edgey[1] - j)
+        self.id = int(id)
+        data = CHAR[str(self.id)]
+        self.name = data['name']
+        self.color = data['color'] if 'color' in data else color
+        self.hardness = data['hardness'] if 'hardness' in data else 0
+        self.penetrable = data['penetrable'] if 'penetrable' in data else True
+        self.replaceable = data['replaceable'] if 'replaceable' in data else False
+        self.climbable = data['climbable'] if 'climbable' in data else False
+        self.count = self.ini = round(self.hardness * (fps / 12))
+        self.surface = font.render(self.name, True, self.color)
+        self.mk = np.arange(self.grid_size ** 2)
+        np.random.shuffle(self.mk)
+
+    def __eq__(self, other):
+        if isinstance(other, Block):
+            if self.id == other.id:
+                return True
+        return False
+
+    def broken(self):
+        return self.count <= 0
+
+    def item(self):
+        return Items(self.id)
+
+    def chain(self, round):
+        return []
+
+    def draw(self, screen, camera, alpha):
+        sx, sy = camera.world_to_screen(self.pos)
+        if -size <= sx <= WIDTH and -size <= sy <= HEIGHT and alpha != 0:
+            self.surface.set_alpha(alpha)
+            screen.blit(self.surface, (sx, sy))
+            if self.count < self.ini:
+                eliminated = round(np.ceil(self.grid_size ** 2 * (1 - self.count / self.ini)))
+                for idx in self.mk[:eliminated]:
+                    x = sx + (idx % self.grid_size) * self.cell_size
+                    y = sy + (idx // self.grid_size) * self.cell_size
+                    pg.draw.rect(screen, backcolor, (x, y, self.cell_size, self.cell_size))
+
+
+class Soil(Block):
+    _eq = Block(248, 0, 0, 0)
+
+    def chain(self, round):
+        if round[1, 0] == Soil._eq:
+            return [(0, 1)]
+        else:
+            return []
+
+
+class Table(Block):
     def __init__(self, *args):
         super().__init__(*args)
         self.syner = Synthesizer((WIDTH / 2 - per, 330 / scale), 3)
@@ -34,7 +109,7 @@ class Table(BlockEntity):
         self.syner.draw(screen)
 
 
-class Desk(BlockEntity):
+class Desk(Block):
     def __init__(self, *args):
         super().__init__(*args)
         self.syner = Synthesizer((WIDTH / 2 - per * 2, 245 / scale), 4)
@@ -61,17 +136,17 @@ class Desk(BlockEntity):
         self.syner.draw(screen)
 
 
-class Word(BlockEntity):
+class Word(Block):
     def item(self):
         return Items(np.random.choice(ID1))
 
 
-class Symbol(BlockEntity):
+class Symbol(Block):
     def item(self):
         return Items(np.random.choice(ID2))
 
 
-class Lamp(BlockEntity):
+class Lamp(Block):
     def __init__(self, *args):
         super().__init__(*args)
         self.light = Light(500, self.pos)
@@ -93,7 +168,7 @@ class Lamp(BlockEntity):
             world.remove_light(self.light)
 
 
-class Candle(BlockEntity):
+class Candle(Block):
     def __init__(self, *args):
         super().__init__(*args)
         self.light = Light(300, self.pos)
@@ -115,26 +190,19 @@ class Candle(BlockEntity):
             world.remove_light(self.light)
 
 
-class Writeboard(BlockEntity):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def draw_ui(self):
-        pass
-
-
-BLOCK_ENTITY = {
-    2640: Table,
-    3698: Desk,
-    3720: Word,
-    749: Symbol,
-    508: Lamp,
-    3654: Candle
+Block.SPEACIAL = {
+    2758: Soil,
+    2639: Table,
+    3697: Desk,
+    3719: Word,
+    748: Symbol,
+    507: Lamp,
+    3653: Candle
 }
 
 
 class Items:
-    SPECIAL = {}
+    SPEACIAL = {}
     per2 = int(per * 0.3)
     sp = 8 * scale
     font_i = pg.font.Font(font_path, int(per / 1.5))
@@ -143,18 +211,18 @@ class Items:
     def __new__(cls, *args):
         if len(args) != 0:
             id = args[0]
-            if id in Items.SPECIAL:
-                return super().__new__(Items.SPECIAL[id])
+            if id in Items.SPEACIAL:
+                return super().__new__(Items.SPEACIAL[id])
         return super().__new__(cls)
 
     def __init__(self, id, count=1):
         self.id = int(id)
-        data = CHAR[self.id]
+        data = CHAR[str(self.id)]
         self.name = data['name']
-        self.color = data['color']
-        self.placeable = data['placeable']
-        self.exclevel = data['exclevel']
-        self.max_count = data['stacking']
+        self.color = data['color'] if 'color' in data else color
+        self.placeable = data['placeable'] if 'placeable' in data else True
+        self.attack = data['attack'] if 'attack' in data else 1
+        self.max_count = 64 if (data['stackable'] if 'stackable' in data else True) else 1
         self.count = min(count, self.max_count) if count > 0 else 1
 
     def __eq__(self, other):
@@ -210,13 +278,14 @@ class Items:
 
 
 class Grass(Items):
-    _eqs = [2758]
+    _eqs = [Block(2758, 0, 0, 0)]
+
     def check(self, round):
         return round[1, 2] in Grass._eqs and self.placeable
 
 
-Items.SPECIAL = {
-    249: Grass
+Items.SPEACIAL = {
+    248: Grass
 }
 
 
@@ -321,3 +390,33 @@ class Synthesizer:
             self.result.draw(screen, self.rx, self.ry) if self.result != None else None
 
 
+class Writeboard(Block):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def draw_ui(self):
+        pass
+
+
+class Light:
+    def __init__(self, bright, pos):
+        self.x, self.y = pos
+        self.bright = bright
+        self._v_light = np.vectorize(self.light_pos)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def light_pos(self, x, y):
+        d2 = (x - self.x) ** 2 + (y - self.y) ** 2
+        if d2 == 0:
+            return 255
+        else:
+            bright = self.bright / d2
+            return bright if bright >= 2 else 0
+
+    def lighting(self, pos):
+        return self._v_light(*pos)
+
+    def set_bright(self, bright):
+        self.bright = bright

@@ -125,13 +125,13 @@ class UI:
             self.indice = 0
 
     def get_width(self, n):
-        return font_m.render(self.options[n], True, color).get_width()
+        return font.render(self.options[n], True, color).get_width()
 
 
 class Home(UI):
     sp = size + 50 * scale
-    width = (WIDTH - title.get_width()) / 2
-    height = HEIGHT - title.get_height()
+    width = (WIDTH - tw) / 2
+    height = HEIGHT - th
     start_y = 665
 
     def __init__(self):
@@ -155,7 +155,7 @@ class Worlds(UI):
     start_y = HEIGHT - uh + oh + 30
     dis = 320 * scale
     dh = 50 * scale
-    twidth = font_m.render('2024-07-13 18:03:33', True, color).get_width()
+    twidth = font.render('2024-07-13 18:03:33', True, color).get_width()
     surface = pg.Surface((width + 20, size + sp), pg.SRCALPHA)
     surface.fill((255, 215, 0, 70))
 
@@ -192,13 +192,13 @@ class Worlds(UI):
 
     def delete(self):
         if self.world != None:
-            shutil.rmtree(os.path.join(save_path, self.get_name()))
+            shutil.rmtree(os.path.join(save_path, self.get_world()[0]))
             self.worlds.pop(self.world)
             self.n -= 1
             self.world = None
 
-    def get_name(self):
-        return self.worlds[self.world][0]
+    def get_world(self):
+        return self.worlds[self.world]
 
     def draw(self, screen):
         draw_word(screen, '世界', color, (WIDTH / 2 - size, self.dh))
@@ -259,7 +259,7 @@ class Create(UI):
         pg.key.start_text_input() if self.name.on_click or self.seed.on_click else pg.key.stop_text_input()
 
     def world_data(self):
-        seed = rd.randint(0, int('9' * 30)) if self.seed.empty() else int(self.seed.text)
+        seed = rd.randint(-int('9' * 20), int('9' * 21)) if self.seed.empty() else int(self.seed.text)
         return self.name.text, seed, self.type.get_choice(), self.mode.get_choice()
 
     def input(self, text):

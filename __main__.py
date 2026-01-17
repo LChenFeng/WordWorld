@@ -1,4 +1,3 @@
-from perlin_noise import PerlinNoise
 from Data.UI import *
 from Data.player import *
 from Data.world import *
@@ -7,60 +6,22 @@ os.environ['SDL_IME_SHOW_UI'] = '1'
 pg.display.set_caption('文字世界')
 screen = pg.display.set_mode((WIDTH, HEIGHT), pg.FULLSCREEN | pg.HWSURFACE | pg.DOUBLEBUF | pg.SWSURFACE)
 pg.key.stop_text_input()
-pg.mixer.music.set_volume(0.5)
-pg.mixer.music.play(loops=-1, fade_ms=2000)
 
 
-class WorldGenerate:
-    DYN_DTYPE = np.dtype([('id', 'u2'), ('color', '3u1'), ('flags', 'u1')])  # flags 0:is_block_entity, 1:penetrable
-
-    def __init__(self, name, type, seed, mode):
-        self.name = name
-        self.type = type  # 随机 0, 平坦 1
-        self.seed = seed
-        self.mode = mode
-        self.rng = np.random.default_rng(seed)
-        self.generate()
-        self.born()
-        self.save()
-
-    def generate(self):
-        self.map = np.zeros(world_size, dtype=self.DYN_DTYPE)
-        if self.type:
-            self.flat()
-        else:
-            self.unflat()
-
-    def flat(self):
-        pass
-
-    def unflat(self):
-        pass
-
-    def born(self):
-        middle = int(world_size[0] / 2)
-        px = chunk_size[0] * int((edgechunk[1] - edgechunk[0]) / 6)
-        j = self.rng.integers(middle - px, middle + px)
-        i = self.map.get_spec_pos(j, lambda b: not CHAR[b]['penetrable'])
-        self.player = Player(self.map.index_to_coord((100, j)), self.mode)
-        self.player.knap.add(Items(507, 64))
-        self.player.knap.add(Items(3653, 64))
-        self.player.knap.add(Items(1518, 64))
-        self.player.knap.add(Items(3697, 64))
-
-    def save(self):
-        os.mkdir(os.path.join(save_path, self.name))
-        os.mkdir(os.path.join(save_path, f'{self.name}/chunks'))
-        with open(os.path.join(save_path, f'{self.name}/init.json'), 'w+') as file:
-            json.dump({'type': self.type, 'seed': self.seed, 'mode': self.mode}, file)
-        with open(os.path.join(save_path, f'{self.name}/player.pkl'), 'wb+') as file:
-            pickle.dump(self.player, file)
-        with open(os.path.join(save_path, f'{self.name}/entities.pkl'), 'wb+') as file:
-            pickle.dump({}, file)
-        for i in range(edgechunk[0], edgechunk[1] + 1):
-            x = chunk_size[0] * (i - edgechunk[0])
-            np.save(os.path.join(save_path, f'{self.name}/chunks/{i}.npy'), self.map.blocks[x:x + chunk_size[0]])
-
+def load_player(world, mode):
+    try:
+        with open(os.path.join(save_path, world.name, 'player.pkl'), 'rb') as file:
+            player = pickle.load(file)
+    except FileNotFoundError:
+        rng = np.random.default_rng(abs(world.seed))
+        x = rng.integers(-20, 21) * chunk_size[0] + rng.integers(0, chunk_size[0])
+        player = Player((x, world.born_place(x)), mode)
+        player.knap.add(Items(507, 64))
+        player.knap.add(Items(3653, 64))
+        player.knap.add(Items(1518, 64))
+        player.knap.add(Items(3697, 64))
+        world.save(player)
+    return player
 
 
 def dead(player):
@@ -80,7 +41,7 @@ def dead(player):
                         case pg.K_SPACE | pg.K_RETURN:
                             player.hp.reset()
                             player.knap.add(Items(2569), (9, 2))
-                            return not ui.indice
+                            return True if ui.indice == 0 else False
                 case pg.MOUSEBUTTONDOWN:
                     match event.button:
                         case 4:
@@ -92,11 +53,10 @@ def dead(player):
         pg.display.flip()
 
 
-def play(name):
+def play(name, mode, type, seed):
     clock = pg.time.Clock()
-    with open(os.path.join(save_path, f'{name}/player.pkl'), 'rb') as file:
-        player = pickle.load(file)
-    world = World(name, player.on)
+    world = World(name, type, seed)
+    player = load_player(world, mode)
     running = True
     while running:
         for event in pg.event.get():
@@ -157,7 +117,7 @@ def play(name):
             running = dead(player)
         screen.fill(backcolor)
         world.update(player.on)
-        world.draw(screen, player.get_scrpoint())
+        world.draw(screen, player)
         player.update(world)
         player.draw(screen)
         pg.display.flip()
@@ -178,9 +138,9 @@ def create():
                     match event.key:
                         case pg.K_ESCAPE:
                             running = False
-                        case pg.K_RIGHT | pg.K_d:
+                        case pg.K_RIGHT:
                             ui.move_indice(1)
-                        case pg.K_LEFT | pg.K_a:
+                        case pg.K_LEFT:
                             ui.move_indice(-1)
                         case pg.K_BACKSPACE:
                             ui.remove()
@@ -191,8 +151,7 @@ def create():
                                     continue
                                 else:
                                     pg.key.stop_text_input()
-                                    WorldGenerate(name, type, seed, mode)
-                                    play(name)
+                                    play(name, mode, type, seed)
                             running = False
                 case pg.MOUSEBUTTONDOWN:
                     match event.button:
@@ -229,7 +188,8 @@ def worlds():
                             match ui.indice:
                                 case 0:
                                     if ui.world != None:
-                                        play(ui.get_name())
+                                        name, type, mode, seed, _ = ui.get_world()
+                                        play(name, mode, type, seed)
                                         running = False
                                 case 1:
                                     ui.delete()
